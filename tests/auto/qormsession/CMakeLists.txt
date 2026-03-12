@@ -4,10 +4,12 @@ qtorm_add_unit_test(NAME tst_ormsession SOURCES
     domain/person.cpp
     domain/province.cpp
     domain/town.cpp
+    domain/withnotnull.cpp
 
     domain/person.h
     domain/province.h
     domain/town.h
+    domain/withnotnull.h
 
     ormsession.qrc
 

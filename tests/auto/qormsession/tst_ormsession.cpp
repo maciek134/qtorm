@@ -31,10 +31,12 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
+#include <QSqlField>
 
 #include "domain/person.h"
 #include "domain/province.h"
 #include "domain/town.h"
+#include "domain/withnotnull.h"
 
 #include "private/qormglobal_p.h"
 
@@ -82,6 +84,7 @@ private slots:
     void testSchemaAppendCreatesTablesAndAddsColumns();
     void testSchemaUpdateCreatesTablesAndAddsColumns();
     void testSchemaUpdateRemovesColumns();
+    void testSchemaUpdateUpdatesNotNull();
 };
 
 SqliteSessionTest::SqliteSessionTest()
@@ -99,7 +102,7 @@ void SqliteSessionTest::init()
     if (db.exists())
         QVERIFY(db.remove());
 
-    qRegisterOrmEntity<Town, Province, Person>();
+    qRegisterOrmEntity<Town, Province, Person, WithNotNull>();
 }
 
 void SqliteSessionTest::cleanup()
@@ -975,6 +978,59 @@ void SqliteSessionTest::testSchemaUpdateRemovesColumns()
         QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
     }
 }
+
+void SqliteSessionTest::testSchemaUpdateUpdatesNotNull()
+{
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+        db.setDatabaseName("testdb.db");
+        QVERIFY(db.open());
+
+        static const QStringList statements{
+            "CREATE TABLE WithNotNull(id INTEGER PRIMARY KEY AUTOINCREMENT, data INTEGER)",
+            "INSERT INTO WithNotNull(id, data) VALUES(1, 2)",
+            "INSERT INTO WithNotNull(id, data) VALUES(2, 3)"};
+
+        for (const QString& statement : statements)
+        {
+            qDebug() << "Executing" << statement;
+            QSqlQuery query{db};
+            QVERIFY(query.exec(statement));
+            QCOMPARE(query.lastError().type(), QSqlError::NoError);
+        }
+
+        db.close();
+        QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
+    }
+
+    {
+        QOrmSession session{QOrmSessionConfiguration::fromFile(":/qtorm_update_schema.json")};
+
+        auto result = session.from<WithNotNull>().select();
+        QCOMPARE(result.error().type(), QOrm::ErrorType::None);
+        auto notNullData = result.toVector();
+        QCOMPARE(notNullData.size(), 2);
+        QCOMPARE(notNullData[0]->id(), 1);
+        QCOMPARE(notNullData[1]->id(), 2);
+    }
+
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+        db.setDatabaseName("testdb.db");
+        QVERIFY(db.open());
+
+        QVERIFY(db.tables().contains("WithNotNull"));
+        QSqlRecord record = db.record("WithNotNull");
+        QCOMPARE(record.count(), 2);
+        QVERIFY(record.contains("id"));
+        QVERIFY(record.contains("data"));
+        QCOMPARE(record.field("data").requiredStatus(), QSqlField::Required);
+
+        db.close();
+        QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
+    }
+}
+
 
 void SqliteSessionTest::testRemoveInstance()
 {

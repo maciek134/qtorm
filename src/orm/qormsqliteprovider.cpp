@@ -586,6 +586,14 @@ QOrmError QOrmSqliteProviderPrivate::updateSchema(const QOrmRelation& relation)
                     << " are incompatible.";
                 updateNeeded = true;
             }
+            else if ((field.requiredStatus() == QSqlField::Required) != mapping->isNotNull())
+            {
+                qCDebug(qtorm).noquote().nospace()
+                    << "updating table " << relation.mapping()->tableName() << ": field "
+                    << field.name() << " nullability (" << field.requiredStatus()
+                    << ") differs from the mapping (" << mapping->isNotNull() << ")";
+                updateNeeded = true;
+            }
         }
 
         // Check if there are non-transient class properties that are not mapped in the database.

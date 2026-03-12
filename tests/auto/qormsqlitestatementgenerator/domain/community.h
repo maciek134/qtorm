@@ -33,12 +33,14 @@ class Community : public QObject
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(int population READ population WRITE setPopulation NOTIFY populationChanged)
     Q_PROPERTY(Province* province READ province WRITE setProvince NOTIFY provinceChanged)
+    Q_PROPERTY(int neverNull READ neverNull WRITE setNeverNull NOTIFY neverNullChanged)
     Q_PROPERTY(bool hasLargePopulation READ hasLargePopulation STORED false)
     Q_PROPERTY(bool hasSmallPopulation READ hasSmallPopulation)
 
     Q_ORM_CLASS(TABLE communities)
     Q_ORM_PROPERTY(communityId COLUMN community_id IDENTITY)
     Q_ORM_PROPERTY(hasSmallPopulation TRANSIENT)
+    Q_ORM_PROPERTY(neverNull NOT_NULL)
 
 public:
     Q_INVOKABLE Community(QObject* parent = nullptr);
@@ -83,6 +85,16 @@ public:
         }
     }
 
+    int neverNull() const { return m_neverNull; }
+    void setNeverNull(int neverNull)
+    {
+        if (m_neverNull != neverNull)
+        {
+            m_neverNull = neverNull;
+            emit neverNullChanged();
+        }
+    }
+
     bool hasLargePopulation() const { return m_population > 5000; }
     bool hasSmallPopulation() const { return !hasLargePopulation(); }
 
@@ -91,10 +103,12 @@ signals:
     void nameChanged();
     void populationChanged();
     void provinceChanged();
+    void neverNullChanged();
 
 private:
     long m_communityId{0};
     QString m_name;
     int m_population{0};
     Province* m_province{nullptr};
+    int m_neverNull{1};
 };

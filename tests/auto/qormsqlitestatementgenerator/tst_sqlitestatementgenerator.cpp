@@ -145,6 +145,7 @@ void SqliteStatementGenerator::testInsertForCustomizedEntity()
     hagenberg->setCommunityId(4232);
     hagenberg->setName("Hagenberg");
     hagenberg->setPopulation(4000);
+    hagenberg->setNeverNull(5);
 
     QVariantMap boundParameters;
     QString statement =
@@ -152,11 +153,12 @@ void SqliteStatementGenerator::testInsertForCustomizedEntity()
 
     QCOMPARE(
         statement,
-        R"(INSERT INTO "communities"("community_id","name","population","province_id") VALUES(:community_id,:name,:population,:province_id))");
+        R"(INSERT INTO "communities"("community_id","name","population","province_id","nevernull") VALUES(:community_id,:name,:population,:province_id,:nevernull))");
     QCOMPARE(boundParameters[":community_id"], 4232);
     QCOMPARE(boundParameters[":name"], "Hagenberg");
     QCOMPARE(boundParameters[":population"], 4000);
     QCOMPARE(boundParameters[":province_id"], QVariant::fromValue(nullptr));
+    QCOMPARE(boundParameters[":nevernull"], 5);
 }
 
 void SqliteStatementGenerator::testInsertWithNamespace()
@@ -403,7 +405,7 @@ void SqliteStatementGenerator::testCreateTableForCustomizedEntity()
     QOrmMetadataCache cache;
     QCOMPARE(
         QOrmSqliteStatementGenerator{}.generateCreateTableStatement(cache.get<Community>()),
-        R"(CREATE TABLE "communities"("community_id" INTEGER PRIMARY KEY,"name" TEXT,"population" INTEGER,"province_id" INTEGER))");
+        R"(CREATE TABLE "communities"("community_id" INTEGER PRIMARY KEY,"name" TEXT,"population" INTEGER,"province_id" INTEGER,"nevernull" INTEGER NOT NULL))");
 }
 
 void SqliteStatementGenerator::testCreateTableWithQVariant()
