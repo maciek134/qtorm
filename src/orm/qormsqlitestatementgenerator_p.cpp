@@ -204,7 +204,7 @@ QString QOrmSqliteStatementGenerator::generateUpdateStatement(const QOrmMetadata
     QString whereClause =
         generateWhereClause(QOrmFilter{*relation.objectIdMapping() == objectId}, boundParameters);
 
-    QStringList parts = {"UPDATE", relation.tableName(), "SET", setList.join(','), whereClause};
+    QStringList parts = {"UPDATE", escapeIdentifier(relation.tableName()), "SET", setList.join(','), whereClause};
 
     return parts.join(QChar(' '));
 }
