@@ -575,9 +575,9 @@ QString QOrmSqliteStatementGenerator::generateCreateTableStatement(
     QString fieldsStr = fields.join(',');
 
     Q_ASSERT(!overrideTableName.has_value() || !overrideTableName->isEmpty());
-    QString effectiveTableName{overrideTableName.value_or(escapeIdentifier(entity.tableName()))};
+    QString effectiveTableName{overrideTableName.value_or(entity.tableName())};
 
-    return QStringLiteral("CREATE TABLE %1(%2)").arg(effectiveTableName, fieldsStr);
+    return QStringLiteral("CREATE TABLE %1(%2)").arg(escapeIdentifier(effectiveTableName), fieldsStr);
 }
 
 QString QOrmSqliteStatementGenerator::generateAlterTableAddColumnStatement(
