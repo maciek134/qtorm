@@ -55,11 +55,15 @@ public:
     SchemaMode schemaMode() const;
     void setSchemaMode(SchemaMode schemaMode);
 
+    [[nodiscard]] bool foreignKeysEnabled() const;
+    void setForeignKeysEnabled(bool foreignKeysEnabled);
+
 private:
     QString m_connectOptions;
     QString m_databaseName;
     bool m_verbose{false};
     SchemaMode m_schemaMode;
+    bool m_foreignKeysEnabled{false};
 };
 
 QT_END_NAMESPACE

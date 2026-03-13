@@ -74,6 +74,7 @@ class QOrmSqliteProviderPrivate
     QString toSqlType(QMetaType::Type type);
     [[nodiscard]] bool canConvertFromSqliteToQProperty(QMetaType::Type fromSqlType,
                                                        QMetaType::Type toQPropertyType);
+    [[nodiscard]] bool fieldHasForeignKey(const QSqlField& field);
 
     Q_REQUIRED_RESULT
     QOrmError lastDatabaseError() const;
@@ -139,6 +140,17 @@ bool QOrmSqliteProviderPrivate::canConvertFromSqliteToQProperty(QMetaType::Type 
 #else
     return QMetaType::canConvert(QMetaType{fromSqlType}, QMetaType{toQPropertyType});
 #endif
+}
+
+bool QOrmSqliteProviderPrivate::fieldHasForeignKey(const QSqlField& field)
+{
+    QSqlQuery query = prepareAndExecute(
+        R"(SELECT 1 FROM pragma_foreign_key_list(:table_name) WHERE "from" = :column)",
+        {{":table_name", field.tableName()},{":column", field.name()}});
+
+    // query.size() is not supported for sqlite, but first() will confirm whether we got at least
+    // one result which is what we care about
+    return query.first();
 }
 
 QOrmError QOrmSqliteProviderPrivate::lastDatabaseError() const
@@ -568,6 +580,14 @@ QOrmError QOrmSqliteProviderPrivate::updateSchema(const QOrmRelation& relation)
                         << ": data type of field " << field.name() << " is incompatible with its "
                         << relation.mapping()->className() << "::" << mapping->classPropertyName()
                         << " mapping.";
+                    updateNeeded = true;
+                }
+                else if (fieldHasForeignKey(field) != mapping->hasForeignKey())
+                {
+                    qCDebug(qtorm).noquote().nospace()
+                        << "updating table " << relation.mapping()->tableName() << ": field "
+                        << field.name() << " foreign key (" << !mapping->hasForeignKey()
+                        << ") differs from the mapping (" << mapping->hasForeignKey() << ")";
                     updateNeeded = true;
                 }
             }
@@ -1128,6 +1148,11 @@ QOrmError QOrmSqliteProvider::connectToBackend()
         if (!d->m_database.open())
         {
             return d->lastDatabaseError();
+        }
+
+        if (d->m_sqlConfiguration.foreignKeysEnabled())
+        {
+            return d->setForeignKeysEnabled(true);
         }
     }
 

@@ -59,6 +59,7 @@ static QOrmSqliteConfiguration _build_json_sqlite_configuration(const QJsonObjec
     sqlConfiguration.setDatabaseName(object["databaseName"].toString());
     sqlConfiguration.setVerbose(object["verbose"].toBool(false));
     sqlConfiguration.setConnectOptions(object["connectOptions"].toString());
+    sqlConfiguration.setForeignKeysEnabled(object["foreignKeysEnabled"].toBool(false));
 
     QString schemaModeStr = object["schemaMode"].toString("validate").toLower();
 

@@ -46,6 +46,7 @@ public:
                         const QOrmMetadata* referencedEntity,
                         bool isTransient,
                         bool isNotNull,
+                        bool hasForeignKey,
                         QOrmUserMetadata userMetadata);
     QOrmPropertyMapping(const QOrmPropertyMapping&);
     QOrmPropertyMapping(QOrmPropertyMapping&&);
@@ -66,6 +67,7 @@ public:
     [[nodiscard]] const QOrmMetadata* referencedEntity() const;
     [[nodiscard]] bool isTransient() const;
     [[nodiscard]] bool isNotNull() const;
+    [[nodiscard]] bool hasForeignKey() const;
     [[nodiscard]] const QOrmUserMetadata& userMetadata() const;
 
 private:

@@ -37,6 +37,7 @@
 #include "domain/province.h"
 #include "domain/town.h"
 #include "domain/withnotnull.h"
+#include "domain/withforeignkey.h"
 
 #include "private/qormglobal_p.h"
 
@@ -85,6 +86,9 @@ private slots:
     void testSchemaUpdateCreatesTablesAndAddsColumns();
     void testSchemaUpdateRemovesColumns();
     void testSchemaUpdateUpdatesNotNull();
+    void testSchemaUpdateUpdatesForeignKey();
+
+    void testForeignKeysEnabled();
 };
 
 SqliteSessionTest::SqliteSessionTest()
@@ -102,7 +106,7 @@ void SqliteSessionTest::init()
     if (db.exists())
         QVERIFY(db.remove());
 
-    qRegisterOrmEntity<Town, Province, Person, WithNotNull>();
+    qRegisterOrmEntity<Town, Province, Person, WithNotNull, WithForeignKey>();
 }
 
 void SqliteSessionTest::cleanup()
@@ -1031,6 +1035,57 @@ void SqliteSessionTest::testSchemaUpdateUpdatesNotNull()
     }
 }
 
+void SqliteSessionTest::testSchemaUpdateUpdatesForeignKey()
+{
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+        db.setDatabaseName("testdb.db");
+        QVERIFY(db.open());
+
+        static const QStringList statements{
+            "CREATE TABLE WithNotNull(id INTEGER PRIMARY KEY AUTOINCREMENT, data INTEGER NOT NULL)",
+            "INSERT INTO WithNotNull(id, data) VALUES(1, 2)",
+            "CREATE TABLE WithForeignKey(id INTEGER PRIMARY KEY AUTOINCREMENT, data_id INTEGER)",
+            "INSERT INTO WithForeignKey(id, data_id) VALUES(1, 1)",
+            "INSERT INTO WithForeignKey(id, data_id) VALUES(2, 1)"};
+
+        for (const QString& statement : statements)
+        {
+            qDebug() << "Executing" << statement;
+            QSqlQuery query{db};
+            QVERIFY(query.exec(statement));
+            QCOMPARE(query.lastError().type(), QSqlError::NoError);
+        }
+
+        db.close();
+        QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
+    }
+
+    {
+        QOrmSession session{QOrmSessionConfiguration::fromFile(":/qtorm_update_schema.json")};
+
+        auto result = session.from<WithForeignKey>().select();
+        QCOMPARE(result.error().type(), QOrm::ErrorType::None);
+        auto fkData = result.toVector();
+        QCOMPARE(fkData.size(), 2);
+        QCOMPARE(fkData[0]->id(), 1);
+        QCOMPARE(fkData[1]->id(), 2);
+    }
+
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+        db.setDatabaseName("testdb.db");
+        QVERIFY(db.open());
+
+        QSqlQuery query{db};
+        QVERIFY(query.exec(R"(SELECT 1 FROM pragma_foreign_key_list('WithForeignKey') WHERE "from" = 'data_id';)"));
+        QCOMPARE(query.lastError().type(), QSqlError::NoError);
+        QVERIFY(query.first());
+
+        db.close();
+        QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
+    }
+}
 
 void SqliteSessionTest::testRemoveInstance()
 {
@@ -1104,6 +1159,24 @@ void SqliteSessionTest::testRemoveWithFilter()
         QVERIFY(removedInstances.contains(linz));
         qDeleteAll(query.toVector());
     }
+}
+
+void SqliteSessionTest::testForeignKeysEnabled()
+{
+    QOrmSqliteConfiguration sqliteConfiguration{};
+    sqliteConfiguration.setForeignKeysEnabled(true);
+    sqliteConfiguration.setDatabaseName(":memory:");
+    QOrmSqliteProvider* sqliteProvider = new QOrmSqliteProvider{sqliteConfiguration};
+    QOrmSessionConfiguration sessionConfiguration{sqliteProvider, true};
+    QOrmSession session{sessionConfiguration};
+
+    QOrmSqliteProvider* provider =
+        static_cast<QOrmSqliteProvider*>(session.configuration().provider());
+    provider->connectToBackend();
+    QSqlQuery query{provider->database()};
+
+    QVERIFY(query.exec("PRAGMA foreign_keys") && query.next());
+    QCOMPARE(query.value("foreign_keys").toBool(), true);
 }
 
 QTEST_GUILESS_MAIN(SqliteSessionTest)

@@ -73,6 +73,7 @@ private slots:
 
     void testAlterTableAddColumn();
     void testAlterTableAddColumnWithReference();
+    void testAlterTableAddColumnWithForeignKey();
 
     void testSelectWithLimitOffset();
     void testSelectWithNamespace();
@@ -405,7 +406,7 @@ void SqliteStatementGenerator::testCreateTableForCustomizedEntity()
     QOrmMetadataCache cache;
     QCOMPARE(
         QOrmSqliteStatementGenerator{}.generateCreateTableStatement(cache.get<Community>()),
-        R"(CREATE TABLE "communities"("community_id" INTEGER PRIMARY KEY,"name" TEXT,"population" INTEGER,"province_id" INTEGER,"nevernull" INTEGER NOT NULL))");
+        R"(CREATE TABLE "communities"("community_id" INTEGER PRIMARY KEY,"name" TEXT,"population" INTEGER,"province_id" INTEGER REFERENCES "Province" ( "id" ),"nevernull" INTEGER NOT NULL))");
 }
 
 void SqliteStatementGenerator::testCreateTableWithQVariant()
@@ -439,7 +440,7 @@ void SqliteStatementGenerator::testAlterTableAddColumn()
     QString actual = QOrmSqliteStatementGenerator{}.generateAlterTableAddColumnStatement(
         cache.get<Person>(), *cache.get<Person>().classPropertyMapping("name"));
 
-    QCOMPARE(actual, R"(ALTER TABLE "Person" ADD COLUMN "name" TEXT)");
+    QCOMPARE(actual, R"(ALTER TABLE "Person" ADD COLUMN "name" TEXT )");
 }
 
 void SqliteStatementGenerator::testAlterTableAddColumnWithReference()
@@ -448,7 +449,16 @@ void SqliteStatementGenerator::testAlterTableAddColumnWithReference()
     QString actual = QOrmSqliteStatementGenerator{}.generateAlterTableAddColumnStatement(
         cache.get<Town>(), *cache.get<Town>().classPropertyMapping("province"));
 
-    QCOMPARE(actual, R"(ALTER TABLE "Town" ADD COLUMN "province_id" INTEGER)");
+    QCOMPARE(actual, R"(ALTER TABLE "Town" ADD COLUMN "province_id" INTEGER )");
+}
+
+void SqliteStatementGenerator::testAlterTableAddColumnWithForeignKey()
+{
+    QOrmMetadataCache cache;
+    QString actual = QOrmSqliteStatementGenerator{}.generateAlterTableAddColumnStatement(
+        cache.get<Community>(), *cache.get<Community>().classPropertyMapping("province"));
+
+    QCOMPARE(actual, R"(ALTER TABLE "communities" ADD COLUMN "province_id" INTEGER REFERENCES "Province" ( "id" ))");
 }
 
 void SqliteStatementGenerator::testSelectWithLimitOffset()

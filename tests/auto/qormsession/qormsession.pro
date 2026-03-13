@@ -9,11 +9,13 @@ SOURCES +=  tst_ormsession.cpp \
     domain/town.cpp \
     domain/person.cpp \
     domain/withnotnull.cpp \
+    domain/withforeignkey.cpp \
 
 HEADERS += \
     domain/province.h \
     domain/town.h \
     domain/person.h \
     domain/withnotnull.h \
+    domain/withforeignkey.h \
 
 RESOURCES += ormsession.qrc

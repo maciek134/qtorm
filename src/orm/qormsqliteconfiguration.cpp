@@ -62,4 +62,14 @@ void QOrmSqliteConfiguration::setSchemaMode(SchemaMode schemaMode)
     m_schemaMode = schemaMode;
 }
 
+bool QOrmSqliteConfiguration::foreignKeysEnabled() const
+{
+    return m_foreignKeysEnabled;
+}
+
+void QOrmSqliteConfiguration::setForeignKeysEnabled(bool foreignKeysEnabled)
+{
+    m_foreignKeysEnabled = foreignKeysEnabled;
+}
+
 QT_END_NAMESPACE

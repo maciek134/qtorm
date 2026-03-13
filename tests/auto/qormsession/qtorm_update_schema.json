@@ -4,6 +4,7 @@
     "sqlite": {
         "databaseName": "testdb.db",
         "schemaMode": "update",
+        "foreignKeysEnabled": true,
         "verbose": true
     }
 }

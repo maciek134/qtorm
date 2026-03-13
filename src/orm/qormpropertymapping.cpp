@@ -43,6 +43,9 @@ QDebug operator<<(QDebug dbg, const QOrmPropertyMapping& propertyMapping)
     if (propertyMapping.isNotNull())
         dbg << ", not null";
 
+    if (propertyMapping.hasForeignKey())
+        dbg << ", fk";
+
     dbg << ")";
 
     return dbg;
@@ -62,6 +65,7 @@ class QOrmPropertyMappingPrivate : public QSharedData
                                const QOrmMetadata* referencedEntity,
                                bool isTransient,
                                bool isNotNull,
+                               bool hasForeignKey,
                                QOrmUserMetadata userMetadata)
         : m_enclosingEntity{enclosingEntity}
         , m_qMetaProperty{std::move(qMetaProperty)}
@@ -73,6 +77,7 @@ class QOrmPropertyMappingPrivate : public QSharedData
         , m_referencedEntity{referencedEntity}
         , m_isTransient{isTransient}
         , m_isNotNull{isNotNull}
+        , m_hasForeignKey{hasForeignKey}
         , m_userMetadata{std::move(userMetadata)}
     {
     }
@@ -87,6 +92,7 @@ class QOrmPropertyMappingPrivate : public QSharedData
     const QOrmMetadata* m_referencedEntity{nullptr};
     bool m_isTransient{false};
     bool m_isNotNull{false};
+    bool m_hasForeignKey{false};
     QOrmUserMetadata m_userMetadata;
 };
 
@@ -100,6 +106,7 @@ QOrmPropertyMapping::QOrmPropertyMapping(const QOrmMetadata& enclosingEntity,
                                          const QOrmMetadata* referencedEntity,
                                          bool isTransient,
                                          bool isNotNull,
+                                         bool hasForeignKey,
                                          QOrmUserMetadata userMetadata)
     : d{new QOrmPropertyMappingPrivate{enclosingEntity,
                                        std::move(qMetaProperty),
@@ -111,6 +118,7 @@ QOrmPropertyMapping::QOrmPropertyMapping(const QOrmMetadata& enclosingEntity,
                                        referencedEntity,
                                        isTransient,
                                        isNotNull,
+                                       hasForeignKey,
                                        std::move(userMetadata)}}
 {
 }
@@ -183,6 +191,11 @@ bool QOrmPropertyMapping::isTransient() const
 bool QOrmPropertyMapping::isNotNull() const
 {
     return d->m_isNotNull;
+}
+
+bool QOrmPropertyMapping::hasForeignKey() const
+{
+    return d->m_hasForeignKey;
 }
 
 const QOrmUserMetadata& QOrmPropertyMapping::userMetadata() const

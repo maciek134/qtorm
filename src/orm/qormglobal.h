@@ -156,7 +156,8 @@ namespace QOrm
         Identity,
         Transient,
         Schema,
-        NotNull
+        NotNull,
+        ForeignKey
     };
     inline auto qHash(Keyword value)
     {

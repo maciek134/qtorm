@@ -41,6 +41,7 @@ class Community : public QObject
     Q_ORM_PROPERTY(communityId COLUMN community_id IDENTITY)
     Q_ORM_PROPERTY(hasSmallPopulation TRANSIENT)
     Q_ORM_PROPERTY(neverNull NOT_NULL)
+    Q_ORM_PROPERTY(province FOREIGN_KEY)
 
 public:
     Q_INVOKABLE Community(QObject* parent = nullptr);

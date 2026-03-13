@@ -527,6 +527,12 @@ QString QOrmSqliteStatementGenerator::generateCreateTableStatement(
             columnDefs += {escapeIdentifier(mapping.tableFieldName()),
                            toSqliteType(mapping.referencedEntity()->objectIdMapping()->dataType())};
 
+            if (mapping.hasForeignKey())
+                columnDefs += {QStringLiteral("REFERENCES"),
+                              escapeIdentifier(mapping.referencedEntity()->tableName()),
+                              QStringLiteral("("),
+                              escapeIdentifier(mapping.referencedEntity()->objectIdMapping()->tableFieldName()),
+                              QStringLiteral(")")};
         }
         else
         {
@@ -572,10 +578,23 @@ QString QOrmSqliteStatementGenerator::generateAlterTableAddColumnStatement(
         dataType = toSqliteType(propertyMapping.dataType());
     }
 
-    return QStringLiteral("ALTER TABLE %1 ADD COLUMN %2 %3")
+    QString possibleFk = "";
+
+    if (propertyMapping.isReference() && propertyMapping.hasForeignKey())
+    {
+        QStringList fkDef = {QStringLiteral("REFERENCES"),
+                            escapeIdentifier(propertyMapping.referencedEntity()->tableName()),
+                            QStringLiteral("("),
+                            escapeIdentifier(propertyMapping.referencedEntity()->objectIdMapping()->tableFieldName()),
+                            QStringLiteral(")")};
+        possibleFk = fkDef.join(' ');
+    }
+
+    return QStringLiteral("ALTER TABLE %1 ADD COLUMN %2 %3 %4")
         .arg(escapeIdentifier(relation.tableName()),
              escapeIdentifier(propertyMapping.tableFieldName()),
-             dataType);
+             dataType,
+             possibleFk);
 }
 
 QString QOrmSqliteStatementGenerator::generateDropTableStatement(const QOrmMetadata& entity)

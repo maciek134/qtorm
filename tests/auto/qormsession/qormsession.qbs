@@ -11,6 +11,7 @@ QtApplication {
         "domain/province.cpp", "domain/province.h",
         "domain/town.cpp", "domain/town.h",
         "domain/withnotnull.cpp", "domain/withnotnull.h",
+        "domain/withforeignkey.cpp", "domain/withforeignkey.h",
         "tst_ormsession.cpp",
         "ormsession.qrc"]
 }
