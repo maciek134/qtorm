@@ -46,6 +46,14 @@ QDebug operator<<(QDebug dbg, const QOrmPropertyMapping& propertyMapping)
     if (propertyMapping.hasForeignKey())
         dbg << ", fk";
 
+    if (propertyMapping.isUnique()) {
+        dbg << ", unique";
+
+        if (!propertyMapping.uniqueGroup().isEmpty()) {
+            dbg << "(" << propertyMapping.uniqueGroup() << ")";
+        }
+    }
+
     dbg << ")";
 
     return dbg;
@@ -66,6 +74,8 @@ class QOrmPropertyMappingPrivate : public QSharedData
                                bool isTransient,
                                bool isNotNull,
                                bool hasForeignKey,
+                               bool isUnique,
+                               QString uniqueGroup,
                                QOrmUserMetadata userMetadata)
         : m_enclosingEntity{enclosingEntity}
         , m_qMetaProperty{std::move(qMetaProperty)}
@@ -78,6 +88,8 @@ class QOrmPropertyMappingPrivate : public QSharedData
         , m_isTransient{isTransient}
         , m_isNotNull{isNotNull}
         , m_hasForeignKey{hasForeignKey}
+        , m_isUnique{isUnique}
+        , m_uniqueGroup{uniqueGroup}
         , m_userMetadata{std::move(userMetadata)}
     {
     }
@@ -93,6 +105,8 @@ class QOrmPropertyMappingPrivate : public QSharedData
     bool m_isTransient{false};
     bool m_isNotNull{false};
     bool m_hasForeignKey{false};
+    bool m_isUnique{false};
+    QString m_uniqueGroup;
     QOrmUserMetadata m_userMetadata;
 };
 
@@ -107,6 +121,8 @@ QOrmPropertyMapping::QOrmPropertyMapping(const QOrmMetadata& enclosingEntity,
                                          bool isTransient,
                                          bool isNotNull,
                                          bool hasForeignKey,
+                                         bool isUnique,
+                                         QString uniqueGroup,
                                          QOrmUserMetadata userMetadata)
     : d{new QOrmPropertyMappingPrivate{enclosingEntity,
                                        std::move(qMetaProperty),
@@ -119,6 +135,8 @@ QOrmPropertyMapping::QOrmPropertyMapping(const QOrmMetadata& enclosingEntity,
                                        isTransient,
                                        isNotNull,
                                        hasForeignKey,
+                                       isUnique,
+                                       uniqueGroup,
                                        std::move(userMetadata)}}
 {
 }
@@ -196,6 +214,16 @@ bool QOrmPropertyMapping::isNotNull() const
 bool QOrmPropertyMapping::hasForeignKey() const
 {
     return d->m_hasForeignKey;
+}
+
+bool QOrmPropertyMapping::isUnique() const
+{
+    return d->m_isUnique;
+}
+
+QString QOrmPropertyMapping::uniqueGroup() const
+{
+    return d->m_uniqueGroup;
 }
 
 const QOrmUserMetadata& QOrmPropertyMapping::userMetadata() const

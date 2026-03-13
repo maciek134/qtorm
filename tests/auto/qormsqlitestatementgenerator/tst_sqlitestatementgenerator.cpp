@@ -154,7 +154,7 @@ void SqliteStatementGenerator::testInsertForCustomizedEntity()
 
     QCOMPARE(
         statement,
-        R"(INSERT INTO "communities"("community_id","name","population","province_id","nevernull") VALUES(:community_id,:name,:population,:province_id,:nevernull))");
+        R"(INSERT INTO "communities"("community_id","name","population","province_id","nevernull","code") VALUES(:community_id,:name,:population,:province_id,:nevernull,:code))");
     QCOMPARE(boundParameters[":community_id"], 4232);
     QCOMPARE(boundParameters[":name"], "Hagenberg");
     QCOMPARE(boundParameters[":population"], 4000);
@@ -406,7 +406,7 @@ void SqliteStatementGenerator::testCreateTableForCustomizedEntity()
     QOrmMetadataCache cache;
     QCOMPARE(
         QOrmSqliteStatementGenerator{}.generateCreateTableStatement(cache.get<Community>()),
-        R"(CREATE TABLE "communities"("community_id" INTEGER PRIMARY KEY,"name" TEXT,"population" INTEGER,"province_id" INTEGER REFERENCES "Province" ( "id" ),"nevernull" INTEGER NOT NULL))");
+        R"(CREATE TABLE "communities"("community_id" INTEGER PRIMARY KEY,"name" TEXT,"population" INTEGER,"province_id" INTEGER REFERENCES "Province" ( "id" ),"nevernull" INTEGER NOT NULL,"code" TEXT UNIQUE,UNIQUE( "name","province_id" )))");
 }
 
 void SqliteStatementGenerator::testCreateTableWithQVariant()

@@ -512,6 +512,7 @@ QString QOrmSqliteStatementGenerator::generateCreateTableStatement(
     std::optional<QString> overrideTableName)
 {
     QStringList fields;
+    QMap<QString, QStringList> uniqueGroups;
 
     for (const QOrmPropertyMapping& mapping : entity.propertyMappings())
     {
@@ -549,7 +550,26 @@ QString QOrmSqliteStatementGenerator::generateCreateTableStatement(
         if (mapping.isNotNull())
             columnDefs.push_back(QStringLiteral("NOT NULL"));
 
+        if (mapping.isUnique())
+        {
+            if (mapping.uniqueGroup().isEmpty())
+            {
+                columnDefs.push_back(QStringLiteral("UNIQUE"));
+            }
+            else
+            {
+                uniqueGroups[mapping.uniqueGroup()].push_back(escapeIdentifier(mapping.tableFieldName()));
+            }
+        }
+
         fields.push_back(columnDefs.join(' '));
+    }
+
+    for (const QStringList& columns : std::as_const(uniqueGroups)) {
+        QStringList uniqueDef = {QStringLiteral("UNIQUE("),
+                                columns.join(','),
+                                QStringLiteral(")")};
+        fields.push_back(uniqueDef.join(' '));
     }
 
     QString fieldsStr = fields.join(',');

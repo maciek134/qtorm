@@ -34,14 +34,17 @@ class Community : public QObject
     Q_PROPERTY(int population READ population WRITE setPopulation NOTIFY populationChanged)
     Q_PROPERTY(Province* province READ province WRITE setProvince NOTIFY provinceChanged)
     Q_PROPERTY(int neverNull READ neverNull WRITE setNeverNull NOTIFY neverNullChanged)
+    Q_PROPERTY(QString code READ code WRITE setCode NOTIFY codeChanged)
     Q_PROPERTY(bool hasLargePopulation READ hasLargePopulation STORED false)
     Q_PROPERTY(bool hasSmallPopulation READ hasSmallPopulation)
 
     Q_ORM_CLASS(TABLE communities)
+    Q_ORM_PROPERTY(name UNIQUE nameProvince)
     Q_ORM_PROPERTY(communityId COLUMN community_id IDENTITY)
     Q_ORM_PROPERTY(hasSmallPopulation TRANSIENT)
     Q_ORM_PROPERTY(neverNull NOT_NULL)
-    Q_ORM_PROPERTY(province FOREIGN_KEY)
+    Q_ORM_PROPERTY(province FOREIGN_KEY UNIQUE nameProvince)
+    Q_ORM_PROPERTY(code UNIQUE)
 
 public:
     Q_INVOKABLE Community(QObject* parent = nullptr);
@@ -96,6 +99,16 @@ public:
         }
     }
 
+    QString code() const { return m_code; }
+    void setCode(QString code)
+    {
+        if (m_code != code)
+        {
+            m_code = code;
+            emit codeChanged();
+        }
+    }
+
     bool hasLargePopulation() const { return m_population > 5000; }
     bool hasSmallPopulation() const { return !hasLargePopulation(); }
 
@@ -105,6 +118,7 @@ signals:
     void populationChanged();
     void provinceChanged();
     void neverNullChanged();
+    void codeChanged();
 
 private:
     long m_communityId{0};
@@ -112,4 +126,5 @@ private:
     int m_population{0};
     Province* m_province{nullptr};
     int m_neverNull{1};
+    QString m_code;
 };
